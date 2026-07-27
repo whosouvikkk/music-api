@@ -1,28 +1,11 @@
 const express = require('express');
-const cors = require('cors');
-const routes = require('./routes/index');
+const router = express.Router();
+const musicController = require('../controllers/musicController');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Route to search for a list of songs
+router.get('/search/songs', musicController.searchSongs);
 
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+// Route to get the full playable details of a single song using its ID
+router.get('/songs', musicController.getSong);
 
-// API Routes
-app.use('/api', routes);
-
-// Health check
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'active', message: 'Music API is running.' });
-});
-
-// Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-module.exports = app;
+module.exports = router;
