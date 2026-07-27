@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-// Assuming you have an httpClient setup, or you can require 'axios' directly if you have it installed.
 const axios = require('axios'); 
 
 // JioSaavn's secret DES key used to encrypt/decrypt media URLs
@@ -22,7 +21,7 @@ function decryptUrl(encryptedMediaUrl) {
         // Remove padding characters
         let url = decrypted.replace(/\0/g, '').trim();
         
-        // Upgrade the quality from 96kbps to 320kbps (optional but recommended)
+        // Upgrade the quality from 96kbps to 320kbps
         url = url.replace('_96.mp4', '_320.mp4'); 
         url = url.replace('_96_p.mp4', '_320.mp4');
         
@@ -40,7 +39,6 @@ function decryptUrl(encryptedMediaUrl) {
  * Formats the raw JioSaavn song object into a clean JSON structure
  */
 function formatSong(song) {
-    // JioSaavn nests data differently depending on the endpoint, so we check multiple paths
     const encryptedUrl = song.encrypted_media_url || (song.more_info && song.more_info.encrypted_media_url);
     const subtitle = song.subtitle || (song.more_info && song.more_info.singers);
     
@@ -56,7 +54,6 @@ function formatSong(song) {
         subtitle: subtitle,
         type: song.type || "song",
         image: image,
-        // Apply the decryption function here to ensure the url field is populated
         url: decryptUrl(encryptedUrl) 
     };
 }
@@ -67,22 +64,17 @@ function formatSong(song) {
 async function searchSongs(query) {
     try {
         const url = `https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(query)}&n=20&p=1&_format=json&_marker=0&ctx=web6dot0`;
-        
-        // Replace this with your custom utils/httpClient if needed: e.g., const response = await httpClient.get(url);
         const response = await axios.get(url);
         
-        // Safely parse the response data (JioSaavn sometimes returns weird strings)
         let data = response.data;
         if (typeof data === 'string') {
             data = JSON.parse(data.trim());
         }
 
-        // If no results, return an empty array
         if (!data || !data.results) {
             return [];
         }
 
-        // Map the raw results through our formatter which includes the decryption
         return data.results.map(formatSong);
 
     } catch (error) {
@@ -91,8 +83,44 @@ async function searchSongs(query) {
     }
 }
 
+/**
+ * Fetches the full details of a specific song, including the playable media URL
+ */
+async function getSongDetails(songId) {
+    try {
+        const detailsUrl = `https://www.jiosaavn.com/api.php?__call=song.getDetails&pids=${songId}&_format=json&ctx=web6dot0`;
+        const detailsResponse = await axios.get(detailsUrl);
+        
+        let data = detailsResponse.data;
+        if (typeof data === 'string') {
+            data = JSON.parse(data.trim());
+        }
+        
+        const songData = data[songId];
+        if (!songData) return null;
+
+        // Extract the encrypted URL and decrypt it
+        const encryptedUrl = songData.encrypted_media_url || (songData.more_info && songData.more_info.encrypted_media_url);
+        const playableUrl = decryptUrl(encryptedUrl);
+
+        return {
+            id: songData.id,
+            title: songData.title ? songData.title.replace(/&quot;/g, '"') : "",
+            subtitle: songData.subtitle || (songData.more_info && songData.more_info.singers),
+            type: songData.type || "song",
+            image: songData.image ? songData.image.replace('150x150', '500x500') : "",
+            url: playableUrl
+        };
+
+    } catch (error) {
+        console.error("Error fetching song details:", error.message);
+        throw new Error("Failed to fetch song details");
+    }
+}
+
 module.exports = {
     searchSongs,
+    getSongDetails,
     formatSong,
     decryptUrl
 };
