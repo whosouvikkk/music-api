@@ -5,7 +5,6 @@ const routes = require('./routes/index.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -13,19 +12,18 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.json({
         success: true,
-        message: "JioSaavn Music API is running smoothly!"
+        message: "JioSaavn Music API Wrapper is running."
     });
 });
 
 // API Routes
 app.use('/api', routes);
 
-// Local development listener
+// Export for Vercel Serverless environment, listen only if local
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
-        console.log(`Server is running locally on port ${PORT}`);
+        console.log(`Server running on port ${PORT}`);
     });
 }
 
-// Export app for Vercel Serverless execution
 module.exports = app;
