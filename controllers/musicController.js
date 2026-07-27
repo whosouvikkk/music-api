@@ -1,4 +1,4 @@
-const jiosaavnService = require('../services/jiosaavnService');
+const jiosaavnService = require('../services/jiosaavnService.js');
 
 const searchSongs = async (req, res) => {
     try {
