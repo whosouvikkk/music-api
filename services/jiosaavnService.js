@@ -1,11 +1,11 @@
 const crypto = require('crypto');
 const axios = require('axios'); 
 
-// JioSaavn's secret DES key used to encrypt/decrypt media URLs
+// Secret DES key used by JioSaavn for URL encryption
 const DES_KEY = '38346591'; 
 
 /**
- * Decrypts JioSaavn's encrypted_media_url into a playable direct stream link.
+ * Decrypts JioSaavn's encrypted_media_url string into a direct playable MP3/MP4 link
  */
 function decryptUrl(encryptedMediaUrl) {
     if (!encryptedMediaUrl) return "";
@@ -18,14 +18,9 @@ function decryptUrl(encryptedMediaUrl) {
         let decrypted = decipher.update(encryptedMediaUrl, 'base64', 'utf-8');
         decrypted += decipher.final('utf-8');
         
-        // Remove padding characters
         let url = decrypted.replace(/\0/g, '').trim();
-        
-        // Upgrade the quality from 96kbps to 320kbps
         url = url.replace('_96.mp4', '_320.mp4'); 
         url = url.replace('_96_p.mp4', '_320.mp4');
-        
-        // Ensure it routes over HTTPS
         url = url.replace('http:', 'https:');
         
         return url;
@@ -36,13 +31,12 @@ function decryptUrl(encryptedMediaUrl) {
 }
 
 /**
- * Formats the raw JioSaavn song object into a clean JSON structure
+ * Formats raw JioSaavn song data into a clean structure
  */
 function formatSong(song) {
     const encryptedUrl = song.encrypted_media_url || (song.more_info && song.more_info.encrypted_media_url);
     const subtitle = song.subtitle || (song.more_info && song.more_info.singers);
     
-    // Format the image URL to fetch the high-resolution 500x500 cover art
     let image = song.image || "";
     if (image.includes('150x150')) {
         image = image.replace('150x150', '500x500');
@@ -59,7 +53,7 @@ function formatSong(song) {
 }
 
 /**
- * Searches for songs on JioSaavn based on a query string
+ * Search songs by query
  */
 async function searchSongs(query) {
     try {
@@ -78,13 +72,13 @@ async function searchSongs(query) {
         return data.results.map(formatSong);
 
     } catch (error) {
-        console.error("Error fetching data from JioSaavn:", error.message);
+        console.error("Error fetching search results from JioSaavn:", error.message);
         throw new Error("Failed to fetch songs from JioSaavn");
     }
 }
 
 /**
- * Fetches the full details of a specific song, including the playable media URL
+ * Fetch detailed song data including the decrypted audio stream link
  */
 async function getSongDetails(songId) {
     try {
@@ -99,7 +93,6 @@ async function getSongDetails(songId) {
         const songData = data[songId];
         if (!songData) return null;
 
-        // Extract the encrypted URL and decrypt it
         const encryptedUrl = songData.encrypted_media_url || (songData.more_info && songData.more_info.encrypted_media_url);
         const playableUrl = decryptUrl(encryptedUrl);
 
