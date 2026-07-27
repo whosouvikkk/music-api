@@ -1,10 +1,13 @@
 const axios = require('axios');
 
-const httpClient = {
-    get: async (url, config = {}) => {
-        const response = await axios.get(url, config);
-        return response.data;
+// Configure base HTTP client with standard headers mimicking a browser
+// This helps prevent getting blocked by JioSaavn's API rate limiters
+const httpClient = axios.create({
+    baseURL: 'https://www.jiosaavn.com/api.php',
+    headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
-};
+});
 
 module.exports = httpClient;
