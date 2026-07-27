@@ -1,15 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const musicController = require('../controllers/musicController');
 
-router.get('/trending', musicController.getTrending);
+// Explicit .js extension prevents Vercel serverless resolution errors
+const musicController = require('../controllers/musicController.js');
+
+// Route to search for songs
 router.get('/search/songs', musicController.searchSongs);
-router.get('/songs/:id', musicController.getSongDetails);
-router.get('/lyrics/:id', musicController.getLyrics);
 
-// Placeholders for expanded functionality to match requirements architecture
-router.get('/albums/:id', (req, res) => res.status(501).json({ error: 'Not implemented yet' }));
-router.get('/artists/:id', (req, res) => res.status(501).json({ error: 'Not implemented yet' }));
-router.get('/playlists/:id', (req, res) => res.status(501).json({ error: 'Not implemented yet' }));
+// Route to get a song's details along with the decrypted playable URL
+router.get('/songs', musicController.getSong);
 
 module.exports = router;
