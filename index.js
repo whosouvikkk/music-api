@@ -1,11 +1,31 @@
 const express = require('express');
-const router = express.Router();
-const musicController = require('../controllers/musicController');
+const cors = require('cors');
+const routes = require('./routes/index.js');
 
-// Route to search for a list of songs
-router.get('/search/songs', musicController.searchSongs);
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Route to get the full playable details of a single song using its ID
-router.get('/songs', musicController.getSong);
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-module.exports = router;
+// Health check endpoint
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: "JioSaavn Music API is running smoothly!"
+    });
+});
+
+// API Routes
+app.use('/api', routes);
+
+// Local development listener
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server is running locally on port ${PORT}`);
+    });
+}
+
+// Export app for Vercel Serverless execution
+module.exports = app;
